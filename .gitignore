@@ -5,3 +5,6 @@ __pycache__/
 # Holds a real Zotero API key. This project had no .gitignore before it became a standalone
 # package, so the file was untracked only by luck.
 .env
+
+PyPI-Howto.md
+

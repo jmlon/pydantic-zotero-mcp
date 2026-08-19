@@ -6,9 +6,7 @@ only in someone else's environment:
 1. **The declared dependency ranges.** This ships as an installable distribution, resolved from
    `pyproject.toml` and never from `uv.lock`, so the ranges are what a consumer actually gets. A
    floor-only pin silently hands them whatever released most recently — versions this code has
-   never run against. The sibling `deep-research-harness` project learned this the hard way (two
-   dependencies were resolving a major version past anything tested, with nothing noticing), so
-   the same check lives here.
+   never run against.
 
 2. **The `deep_research.mcp_servers` entry point.** It is what makes this server usable as an
    in-memory tool source, and nothing in normal use imports it — a typo in `pyproject.toml`, or a
@@ -107,7 +105,7 @@ def test_settings_come_from_a_dotenv_in_the_hosts_working_directory(
     """`ZoteroSettings` declares `env_file=".env"`, a path relative to the *process* CWD.
 
     That is load-bearing for in-memory embedding and easy to miss: an embedded server picks up the
-    **host's** `.env`, not one next to this package. For `deep-research`, whose working directory is
+    **host's** `.env`, not one next to this package. For a host whose working directory is
     the researcher's project folder, that is exactly the documented behaviour — credentials live
     beside the model API keys — but it means two researchers sharing one install can point the same
     bundled server at two different libraries, and it means this factory's result depends on where

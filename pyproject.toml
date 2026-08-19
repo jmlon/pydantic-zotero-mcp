@@ -4,17 +4,16 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-zotero-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server exposing a Zotero library — search, metadata, notes, and PDF full text — to AI agents"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 
-# Every dependency carries an upper bound, for the reason the sibling `deep-research-harness`
-# project documents at length: this ships as an installable distribution, resolved from these
-# ranges rather than from a lock file, so a floor-only pin silently hands end users whatever
-# released most recently — versions this code has never run against.
+# Every dependency carries an upper bound: this ships as an installable distribution, resolved
+# from these ranges rather than from a lock file, so a floor-only pin silently hands end users
+# whatever released most recently — versions this code has never run against.
 #
 # Bounds sit at the next breaking version rather than pinning exactly, so an installed package
 # doesn't conflict with everything else in a shared environment or block security fixes. `fastmcp`
@@ -34,8 +33,8 @@ dependencies = [
 zotero-mcp = "zotero_mcp.__main__:main"
 
 [project.entry-points."deep_research.mcp_servers"]
-# Makes this server discoverable as an in-memory tool source for `deep-research`, which resolves
-# bundled servers through this group by name (see that project's PRD §5b and `deep_research/mcp.py`).
+# Makes this server discoverable as an in-memory tool source by hosts that resolve bundled MCP
+# servers through this entry-point group by name.
 # The value must be a zero-argument factory returning a `FastMCP`; `build_server()` defaults its
 # settings to environment-derived ones, which is exactly the host-process contract.
 #
@@ -74,6 +73,5 @@ package = true
 # and demands it be sorted in among the `fastmcp`/`pydantic` imports, scrambling the
 # stdlib / library / first-party grouping in every test module.
 src = ["."]
-# The default, stated explicitly because it is what the existing code is already formatted to —
-# the sibling harness project wraps at 110, and the two should not drift silently.
+# The default, stated explicitly because it is what the existing code is already formatted to.
 line-length = 88

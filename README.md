@@ -1,11 +1,10 @@
-# zotero-mcp
+# pydantic-zotero-mcp
 
 An MCP server that gives AI agents read access to a Zotero library — search, item
 metadata, collections, tags, the researcher's own notes, and the indexed full text of
 attached PDFs.
 
-See [PRD.md](PRD.md) for requirements and [../fastmcp-guide.md](../fastmcp-guide.md) for
-the FastMCP conventions this follows.
+See [PRD.md](PRD.md) for requirements.
 
 **Status: M1 (read core) + M2 (full text) implemented.** Citation formatting and
 export (M3), prompts (M4), and write tools (M5) are not built yet — see
@@ -13,41 +12,30 @@ export (M3), prompts (M4), and write tools (M5) are not built yet — see
 
 ## Install
 
-This is a **standalone package** — its own `pyproject.toml` and lock file, independent of
-the surrounding `PydanticAI` project's environment. It can be installed on its own, and
-consumers (an MCP client, or the `deep-research` harness) never need this source tree's
-parent.
-
 ### As a tool (`pipx`)
 
 Installs the `zotero-mcp` command into its own isolated environment:
 
 ```bash
-pipx install /path/to/PydanticAI/MCP/ZoteroMCP
+pipx install pydantic-zotero-mcp        # or: pipx install /path/to/checkout
 zotero-mcp --help
 ```
 
 ### Into another project's environment
 
 ```bash
-uv add /path/to/PydanticAI/MCP/ZoteroMCP     # or: uv pip install <path>
-pipx inject deep-research-harness /path/to/PydanticAI/MCP/ZoteroMCP
+uv add pydantic-zotero-mcp              # or: uv pip install pydantic-zotero-mcp
 ```
-
-The second form is what makes this server available to `deep-research` as an in-memory
-tool source — see [Embedding in `deep-research`](#embedding-in-deep-research).
 
 ### For development on this server
 
 ```bash
-cd /path/to/PydanticAI/MCP/ZoteroMCP
+git clone https://github.com/jmlon/pydantic-zotero-mcp
+cd pydantic-zotero-mcp
 uv sync           # creates ./.venv from this project's own lock file
 uv run pytest
 uv run ruff check
 ```
-
-Nothing here reads the parent project's environment. Its test suite is likewise no longer
-collected by a root-level `pytest` run — run it from this directory.
 
 ## Configure
 
@@ -129,39 +117,24 @@ async with Client(server) as client:  # lifespan opens here
 Importing `zotero_mcp` has no side effects — no config read, no client built, no
 network — which is what makes embedding possible. There is a test that enforces it.
 
-### Embedding in `deep-research`
+### Discovery via entry point
 
-The [deep-research harness](../../Harness/deepResearch/) can use this server as an
-**in-memory tool source**: imported and run inside the harness process, no subprocess and
-no socket. It discovers bundled servers through a `deep_research.mcp_servers` entry point,
-which this package declares:
+For host applications that discover bundled MCP servers through Python entry points,
+this package declares one in the `deep_research.mcp_servers` group:
 
 ```toml
 [project.entry-points."deep_research.mcp_servers"]
 zotero = "zotero_mcp:build_server"
 ```
 
-`build_server()` takes no arguments and derives settings from the environment, which is the
-factory contract the harness expects. To use it, install this package into the harness's
-environment and name it in the project's `config.yaml`:
+`build_server()` takes no arguments and derives settings from the environment — install
+this package into the host's environment and the host can resolve and run the server
+in-process by the name `zotero`, without importing anything by path from a config file.
 
-```bash
-pipx inject deep-research-harness /path/to/PydanticAI/MCP/ZoteroMCP
-```
-
-```yaml
-mcp_servers:
-  - name: "zotero"            # matches the entry-point name above
-    transport: "in_memory"
-    health_check: "get_library_info"
-    tool_args:
-      get_item_fulltext: {max_chars: 20000}   # the default is 100,000 — see below
-```
-
-Credentials come from the harness project's `.env`, exactly as its model API keys do. Note
-`max_chars`: this server's default full-text ceiling is 100,000 characters (~25–30k tokens
-for a *single* call), which is generous for interactive use and far too large for a research
-run making many calls against a token budget.
+One tuning note for automated hosts: this server's default full-text ceiling is 100,000
+characters (~25–30k tokens for a *single* `get_item_fulltext` call), which is generous for
+interactive use and far too large for an agent making many calls against a token budget —
+pass a smaller `max_chars` per call, or lower `ZOTERO_FULLTEXT_MAX_CHARS`.
 
 ## Tools
 
@@ -225,8 +198,7 @@ Worth knowing about, since each was a judgment call made during implementation:
    disabled-but-listed tool still costs context. When M5 lands, write tools will simply
    not be registered unless `ZOTERO_ALLOW_WRITES=true`.
 
-   This server targets **FastMCP 3.x**, as does `../fastmcp-guide.md` (see its §12 for the
-   2.x migration table). Two 3.x specifics shape the code here: `enabled` is gone from
+   This server targets **FastMCP 3.x**. Two 3.x specifics shape the code here: `enabled` is gone from
    the decorators, and `result.data` is a generated pydantic model while
    `result.structured_content` is the plain dict — the tests assert on the latter, which
    also verifies null-omission on the wire.
@@ -248,14 +220,8 @@ Worth knowing about, since each was a judgment call made during implementation:
 ## Tests
 
 ```bash
-cd /home/jmlon/GIT/AWS/AI/PydanticAI
-uv run python -m pytest MCP/ZoteroMCP/tests -q      # 65 passed
+uv run pytest      # 80 passed
 ```
-
-Scope the path to `MCP/ZoteroMCP/tests`: a bare `uv run pytest` at the repository root
-aborts during collection on unrelated pre-existing suites (`demos/test_postgres.py`
-opens a Postgres connection at import, and two `test_calc.py` files under
-`Harness/tutorial/` collide on module basename).
 
 The suite uses FastMCP's in-memory transport against a `FakeZotero` that reproduces
 pyzotero's read-metadata-off-the-instance behaviour. No network, no subprocess, no

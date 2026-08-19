@@ -7,7 +7,7 @@
 [Pyzotero Documentation](https://pyzotero.readthedocs.io/en/latest/)
 [Zotero Web API v3 — Basics](https://www.zotero.org/support/dev/web_api/v3/basics)
 [Zotero Web API v3 — Write Requests](https://www.zotero.org/support/dev/web_api/v3/write_requests)
-[FastMCP implementation guidelines](../fastmcp-guide.md) — this server must conform to it
+[FastMCP documentation](https://gofastmcp.com/) — this server must conform to FastMCP conventions
 
 [Free Github MCP](https://github.com/54yyyu/zotero-mcp)  
 
@@ -89,7 +89,7 @@ researcher's own machine.
 
 ## 5. Scope: the tool surface
 
-Design constraints applied throughout (per `../fastmcp-guide.md`): task-shaped tools rather than a
+Design constraints applied throughout: task-shaped tools rather than a
 1:1 mapping of pyzotero methods; every tool annotated `readOnlyHint=True` unless it writes;
 structured, bounded output; explicit units and ID formats.
 
@@ -282,8 +282,8 @@ Two things this buys that the previous arrangement could not:
   interpreter path, no `python -m`, no working directory to get right.
 - **In-memory embedding in another installed tool.** The package declares a
   `deep_research.mcp_servers` entry point resolving to `build_server`, a zero-argument factory
-  returning a configured `FastMCP`. That is how the deep-research harness discovers this server
-  as a bundled, in-process tool source (see its PRD §5b, §4a) without importing anything by
+  returning a configured `FastMCP`. That is how a host application can discover this server
+  as a bundled, in-process tool source without importing anything by
   name from a config file. A server that only existed as a `pythonpath` entry in someone else's
   `pyproject.toml` could not be installed into a *different* tool's environment at all, which
   made in-memory use impossible in practice however well §7.2 supported it in principle.
@@ -509,7 +509,7 @@ Golden fixtures come from recorded real API responses; no live network in unit t
 | **M3 — Citations** | `format_citation`, `format_bibliography`, `export_items`, resources | Zero-edit bibliography in a chosen style |
 | **M4 — Prompts + transports** | 4 prompts, caching, retry/backoff, Logfire, HTTP transport with auth, CLI flags, README | `check_citations` reports a fabricated reference as unmatched; HTTP refuses to boot unauthenticated |
 | **M5 — Writes (opt-in)** | §5.5 tools with full §7.5 safety | Version-conflict and partial-failure tests green |
-| **M6 — Standalone distribution** *(done)* | Own `pyproject.toml`/lock/`.venv` with bounded dependency ranges, `zotero-mcp` console script, `deep_research.mcp_servers` entry point, `.gitignore` covering `.env`; `pyzotero` dropped from the parent project and this suite removed from root-level collection (§7.1a) | `pipx install <this dir>` yields a working `zotero-mcp`; the 80-test suite runs from this directory against the installed package; the deep-research harness runs it in-memory with no subprocess |
+| **M6 — Standalone distribution** *(done)* | Own `pyproject.toml`/lock/`.venv` with bounded dependency ranges, `zotero-mcp` console script, `deep_research.mcp_servers` entry point, `.gitignore` covering `.env` (§7.1a) | `pipx install <this dir>` yields a working `zotero-mcp`; the 80-test suite runs from this directory against the installed package; a host application runs it in-memory with no subprocess |
 
 M1–M4 constitute the shippable v1; M5 is separately gated. **M6 was not in the original plan** —
 it was pulled in because in-memory embedding in another installed tool turned out to be impossible
@@ -583,4 +583,4 @@ Stated explicitly, since they shaped the scope above and are cheap to revise:
   effectively irreplaceable.
 - Zotero's own search and full-text index are sufficient for v1; no retrieval infrastructure is
   built.
-- Consumers are PydanticAI or Claude-based agents already in use in this repository.
+- Consumers are PydanticAI or Claude-based agents.
