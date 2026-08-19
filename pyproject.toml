@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pydantic-zotero-mcp"
+version = "0.1.0"
+description = "MCP server exposing a Zotero library — search, metadata, notes, and PDF full text — to AI agents"
+readme = "README.md"
+requires-python = ">=3.12"
+
+# Every dependency carries an upper bound, for the reason the sibling `deep-research-harness`
+# project documents at length: this ships as an installable distribution, resolved from these
+# ranges rather than from a lock file, so a floor-only pin silently hands end users whatever
+# released most recently — versions this code has never run against.
+#
+# Bounds sit at the next breaking version rather than pinning exactly, so an installed package
+# doesn't conflict with everything else in a shared environment or block security fixes. `fastmcp`
+# is the one that matters most here: FastMCP 4 changes how task-augmented execution is negotiated,
+# and this server has only ever run against 3.x.
+dependencies = [
+    "fastmcp>=3.4.7,<4",
+    "pyzotero>=1.13.7,<2",
+    "pydantic>=2.11,<3",
+    "pydantic-settings>=2.14,<3",
+    "anyio>=4.13,<5",
+]
+
+[project.scripts]
+# `zotero-mcp` is what an MCP client's `command:` should point at once this is installed — no
+# `python -m`, no interpreter path, no working directory. `python -m zotero_mcp` still works.
+zotero-mcp = "zotero_mcp.__main__:main"
+
+[project.entry-points."deep_research.mcp_servers"]
+# Makes this server discoverable as an in-memory tool source for `deep-research`, which resolves
+# bundled servers through this group by name (see that project's PRD §5b and `deep_research/mcp.py`).
+# The value must be a zero-argument factory returning a `FastMCP`; `build_server()` defaults its
+# settings to environment-derived ones, which is exactly the host-process contract.
+#
+# Deliberately an entry point rather than an importable path in the host's `config.yaml`: a config
+# file naming code to import is a code-execution vector, and discovery keeps "add a bundled server"
+# to an install plus one config line.
+zotero = "zotero_mcp:build_server"
+
+[project.urls]
+Homepage = "https://github.com/jmlon/pydantic-zotero-mcp"
+Repository = "https://github.com/jmlon/pydantic-zotero-mcp"
+Issues = "https://github.com/jmlon/pydantic-zotero-mcp/issues"
+
+[dependency-groups]
+# Dev tools are not shipped, so the upper-bound rule above does not apply: a lint or test tool that
+# moves is a local annoyance, not an untested version reaching an end user.
+dev = [
+    "pytest>=8.3.4",
+    "anyio>=4.13",  # supplies the pytest plugin the async tests run under
+    "ruff>=0.16.3",
+    "packaging>=26.3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["zotero_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+# `zotero_mcp` is this project's own package. Without this, ruff's isort treats it as third-party
+# and demands it be sorted in among the `fastmcp`/`pydantic` imports, scrambling the
+# stdlib / library / first-party grouping in every test module.
+src = ["."]
+# The default, stated explicitly because it is what the existing code is already formatted to —
+# the sibling harness project wraps at 110, and the two should not drift silently.
+line-length = 88
