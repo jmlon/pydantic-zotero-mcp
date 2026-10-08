@@ -246,5 +246,7 @@ the network.
 
 [![M8ven Score](https://m8ven.ai/badge/mcp/jmlon-pydantic-zotero-mcp-1q7c0m?v=006d6c2a603984eb8ad24c0aa90dece9)](https://m8ven.ai/mcp/jmlon-pydantic-zotero-mcp-1q7c0m?s=readme)
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/jmlon-pydantic-zotero-mcp-1q7c0m)](https://m8ven.ai/mcp/jmlon-pydantic-zotero-mcp-1q7c0m?s=readme)
+
 
 
