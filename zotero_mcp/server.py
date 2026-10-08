@@ -45,6 +45,16 @@ ITEM_KEY_RE = re.compile(r"^[A-Z0-9]{8}$")
 MAX_LIMIT = 100
 DEFAULT_LIMIT = 25
 
+#: Every tool only reads the configured Zotero library. All four hints are explicit:
+#: some directories (e.g. OpenAI's) reject tools with any hint missing. openWorldHint
+#: is True to declare that, in web mode, tools call the external api.zotero.org.
+READ_ONLY_TOOL = {
+    "readOnlyHint": True,
+    "destructiveHint": False,
+    "idempotentHint": True,
+    "openWorldHint": True,
+}
+
 SearchMode = Literal["metadata", "fulltext"]
 SortField = Literal[
     "relevance", "dateAdded", "dateModified", "title", "creator", "date", "publisher"
@@ -231,7 +241,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
     # ---------------------------------------------------------------- orientation
     @mcp.tool(
         tags={"zotero", "library"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def get_library_info() -> LibraryInfo:
         """Summarize the connected Zotero library: size, mode, and permissions.
@@ -277,7 +287,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
     # --------------------------------------------------------------------- search
     @mcp.tool(
         tags={"zotero", "search"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def search_items(
         query: Annotated[
@@ -375,7 +385,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
 
     @mcp.tool(
         tags={"zotero", "search"},
-        annotations={"readOnlyHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def list_recent_items(
         limit: Annotated[int, Field(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
@@ -430,7 +440,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
 
     @mcp.tool(
         tags={"zotero", "search"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def find_item_by_identifier(
         identifier: Annotated[
@@ -542,7 +552,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
     # ----------------------------------------------------------------- read items
     @mcp.tool(
         tags={"zotero", "items"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def get_item(
         item_key: Annotated[str, Field(description="8-character Zotero item key")],
@@ -577,7 +587,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
 
     @mcp.tool(
         tags={"zotero", "items"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def get_item_children(
         item_key: Annotated[str, Field(description="8-character Zotero item key")],
@@ -596,7 +606,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
 
     @mcp.tool(
         tags={"zotero", "items", "notes"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def get_item_notes(
         item_key: Annotated[str, Field(description="8-character Zotero item key")],
@@ -618,7 +628,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
 
     @mcp.tool(
         tags={"zotero", "fulltext"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def get_item_fulltext(
         item_key: Annotated[
@@ -711,7 +721,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
     # ------------------------------------------------------------------ structure
     @mcp.tool(
         tags={"zotero", "collections"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def list_collections(
         parent_key: Annotated[
@@ -758,7 +768,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
 
     @mcp.tool(
         tags={"zotero", "collections"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def list_collection_items(
         collection_key: Annotated[
@@ -800,7 +810,7 @@ def _register_read_tools(mcp: FastMCP, gw: ZoteroGateway) -> None:
 
     @mcp.tool(
         tags={"zotero", "tags"},
-        annotations={"readOnlyHint": True, "idempotentHint": True},
+        annotations=READ_ONLY_TOOL,
     )
     async def list_tags(
         prefix: Annotated[

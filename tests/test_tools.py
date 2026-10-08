@@ -53,6 +53,17 @@ async def test_every_tool_has_a_description(client):
     assert not missing
 
 
+async def test_every_tool_sets_all_four_hints(client):
+    hints = ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint")
+    async with client:
+        tools = await client.list_tools()
+    incomplete = {
+        t.name: [h for h in hints if not isinstance(getattr(t.annotations, h, None), bool)]
+        for t in tools
+    }
+    assert not {name: gaps for name, gaps in incomplete.items() if gaps}
+
+
 # ------------------------------------------------------------------------ search
 
 
